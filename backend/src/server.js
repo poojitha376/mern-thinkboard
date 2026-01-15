@@ -1,6 +1,7 @@
 import express from "express";
 import cors from "cors" 
 import dotenv from "dotenv";
+import path, { dirname } from "path"
 
 import notesRoutes from "./routes/notesRoutes.js";
 import { connectDB } from "./config/db.js";
@@ -10,11 +11,14 @@ dotenv.config();
 
 const app = express();
 const PORT = process.env.PORT ||  5001
+const __dirname = path.resolve()
 
 //middleware
-app.use(cors({
+if(process.env.NODE_ENV !== "production"){
+    app.use(cors({
     origin: ["http://localhost:5173", "http://127.0.0.1:5173"],
 }))
+}
 app.use(express.json()) //this middle layer withh help parse the json bodies
 app.use(rateLimiter)
 //just before we give a response use the middleware
@@ -26,6 +30,14 @@ app.use(rateLimiter)
 // })
 
 app.use("/api/notes",notesRoutes);
+
+app.use(express.static(path.join(__dirname,"../frontend/dist")))
+
+if(process.env.NODE_ENV === "production"){
+    app.get("*",(req,res) => {
+        res.sendFile(path.join(--dirname,"../frontend","dist","index.html"))
+})
+}
 
 //http://localhost:5001/api/notes/21
 
